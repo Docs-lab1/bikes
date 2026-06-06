@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Kasama Rides - Complete Admin + Live Driver/Customer Tracking</title>
+    <title>Kasama Rides - Official Kasama District | Northern Province, Zambia</title>
     <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -20,7 +20,7 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a472a 0%, #0a1e2f 100%);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -100,7 +100,7 @@
             border: 2px solid white;
         }
 
-        #map, #driverMap {
+        #map {
             height: 100%;
             width: 100%;
         }
@@ -211,10 +211,6 @@
 
         .btn-primary:active {
             transform: scale(0.98);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
         }
 
         .nearby-list {
@@ -388,20 +384,32 @@
         .status-offline {
             color: #ef4444;
         }
+
+        .kasama-banner {
+            background: #f5b042;
+            color: #0a1e2f;
+            padding: 8px;
+            text-align: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
 <div class="phone">
     <!-- Customer Main App -->
     <div id="customerApp">
+        <div class="kasama-banner">
+            <i class="fas fa-map-marker-alt"></i> KASAMA DISTRICT | NORTHERN PROVINCE | ZAMBIA
+        </div>
         <div class="header">
             <div class="header-top">
                 <div class="logo"><i class="fas fa-motorcycle"></i> Kasama Rides</div>
-                <div class="badge"><i class="fas fa-map-marker-alt"></i> Live GPS</div>
+                <div class="badge"><i class="fas fa-map-marker-alt"></i> Official</div>
             </div>
             <div class="location-info">
-                <i class="fas fa-location-dot"></i> <span id="userLocationDisplay">Getting your location...</span>
-                <span class="live-badge">🟢 LIVE</span>
+                <i class="fas fa-location-dot"></i> <span id="userLocationDisplay">Kasama District, Northern Province</span>
+                <span class="live-badge">📍 KASAMA</span>
             </div>
         </div>
         <div class="app-content">
@@ -410,48 +418,48 @@
                 <div class="stat-card" onclick="filterBikes()">
                     <i class="fas fa-motorcycle"></i>
                     <div class="value" id="nearbyCount">0</div>
-                    <div class="label">Nearby Bikes</div>
+                    <div class="label">Bikes in Kasama</div>
                 </div>
                 <div class="stat-card" onclick="filterCars()">
                     <i class="fas fa-car"></i>
                     <div class="value" id="carCount">0</div>
                     <div class="label">ULENDO Cars</div>
                 </div>
-                <div class="stat-card" onclick="centerOnMe()">
+                <div class="stat-card" onclick="centerOnKasama()">
                     <i class="fas fa-crosshairs"></i>
-                    <div class="value" id="etaDisplay">~2</div>
+                    <div class="value" id="etaDisplay">~5</div>
                     <div class="label">Min ETA</div>
                 </div>
             </div>
             <div class="booking-card">
-                <div class="section-title"><i class="fas fa-ticket-alt"></i> Book Your Ride</div>
+                <div class="section-title"><i class="fas fa-ticket-alt"></i> Book Your Ride in Kasama</div>
                 <div class="input-group">
                     <i class="fas fa-circle-dot"></i>
-                    <input type="text" id="pickup" placeholder="Pickup Location" value="My Current Location">
+                    <input type="text" id="pickup" placeholder="Pickup Location in Kasama" value="Kasama Town Centre">
                 </div>
                 <div class="input-group">
                     <i class="fas fa-flag-checkered"></i>
-                    <input type="text" id="dropoff" placeholder="Dropoff Location" value="Kasama Town Centre">
+                    <input type="text" id="dropoff" placeholder="Dropoff Location in Kasama" value="Chinsali Road, Kasama">
                 </div>
                 <div class="input-group">
                     <i class="fas fa-motorcycle"></i>
                     <select id="vehicleType" onchange="filterVehicles()">
-                        <option value="all">🚀 All Vehicles</option>
-                        <option value="bike">🏍️ Motor Bike</option>
-                        <option value="car">🚗 ULENDO Car</option>
+                        <option value="all">🚀 All Vehicles in Kasama</option>
+                        <option value="bike">🏍️ Motor Bike (Fast)</option>
+                        <option value="car">🚗 ULENDO Car (Comfort)</option>
                     </select>
                 </div>
                 <div class="price-box">
-                    <span>💰 Estimated Fare</span>
-                    <strong id="estPrice">ZMW 18 - 45</strong>
+                    <span>💰 Estimated Fare (Kasama rates)</span>
+                    <strong id="estPrice">ZMW 15 - 40</strong>
                 </div>
                 <button class="btn-primary" onclick="requestRide()">
-                    <i class="fas fa-location-dot"></i> Request Ride
+                    <i class="fas fa-location-dot"></i> Request Ride in Kasama
                 </button>
             </div>
             <div class="nearby-list">
-                <div class="section-title"><i class="fas fa-taxi"></i> Nearby Vehicles</div>
-                <div id="vehiclesListContainer">Loading...</div>
+                <div class="section-title"><i class="fas fa-taxi"></i> Vehicles in Kasama District</div>
+                <div id="vehiclesListContainer">Loading Kasama vehicles...</div>
             </div>
             <div id="tripPanel" class="trip-panel"></div>
         </div>
@@ -464,18 +472,20 @@
 
     <!-- Admin Panel -->
     <div id="adminPanel" class="hidden">
+        <div class="kasama-banner">
+            <i class="fas fa-shield-alt"></i> KASAMA DISTRICT ADMIN PANEL
+        </div>
         <div class="header">
             <div class="header-top">
                 <div class="logo"><i class="fas fa-shield-alt"></i> Admin Dashboard</div>
                 <div class="badge" onclick="closeAdminPanel()"><i class="fas fa-times"></i> Close</div>
             </div>
-            <div class="location-info">Manage Bikes, Drivers & View Stats</div>
+            <div class="location-info">Manage Bikes & Drivers in Kasama District</div>
         </div>
         <div class="app-content">
-            <!-- Add New Bike Section -->
             <div class="admin-card">
-                <div class="section-title"><i class="fas fa-plus-circle"></i> Register New Bike/Driver</div>
-                <div class="input-group"><i class="fas fa-motorcycle"></i><input type="text" id="regNumber" placeholder="Registration Number (e.g., BCA 101)"></div>
+                <div class="section-title"><i class="fas fa-plus-circle"></i> Register New Vehicle in Kasama</div>
+                <div class="input-group"><i class="fas fa-motorcycle"></i><input type="text" id="regNumber" placeholder="Registration (e.g., BCA 101)"></div>
                 <div class="input-group"><i class="fas fa-user"></i><input type="text" id="driverName" placeholder="Driver Full Name"></div>
                 <div class="input-group"><i class="fas fa-phone"></i><input type="text" id="driverPhone" placeholder="Driver Phone Number"></div>
                 <div class="input-group"><i class="fas fa-car"></i>
@@ -484,20 +494,17 @@
                         <option value="car">🚗 ULENDO Car</option>
                     </select>
                 </div>
-                <div class="input-group"><i class="fas fa-map-marker-alt"></i><input type="text" id="driverLat" placeholder="Latitude" value="-10.2125"></div>
-                <div class="input-group"><i class="fas fa-map-marker-alt"></i><input type="text" id="driverLng" placeholder="Longitude" value="31.1800"></div>
-                <button class="btn-primary" onclick="registerVehicle()"><i class="fas fa-save"></i> Register Vehicle</button>
+                <div class="input-group"><i class="fas fa-map-marker-alt"></i><input type="text" id="driverLocation" placeholder="Location in Kasama" value="Kasama Town"></div>
+                <button class="btn-primary" onclick="registerVehicle()"><i class="fas fa-save"></i> Register Vehicle in Kasama</button>
             </div>
 
-            <!-- Active Drivers/Bikes List -->
             <div class="admin-card">
-                <div class="section-title"><i class="fas fa-list"></i> Registered Vehicles</div>
+                <div class="section-title"><i class="fas fa-list"></i> Registered Vehicles in Kasama</div>
                 <div id="vehiclesListAdmin" class="driver-list"></div>
             </div>
 
-            <!-- Statistics -->
             <div class="admin-card">
-                <div class="section-title"><i class="fas fa-chart-line"></i> Platform Statistics</div>
+                <div class="section-title"><i class="fas fa-chart-line"></i> Kasama District Statistics</div>
                 <div class="stats-grid">
                     <div class="stat-card"><i class="fas fa-motorcycle"></i><div class="value" id="totalBikes">0</div><div class="label">Total Bikes</div></div>
                     <div class="stat-card"><i class="fas fa-car"></i><div class="value" id="totalCars">0</div><div class="label">Total Cars</div></div>
@@ -512,40 +519,47 @@
     </div>
 </div>
 
-<!-- Admin Toggle Button -->
 <div class="admin-toggle" onclick="toggleAdminPanel()">
-    <i class="fas fa-user-shield"></i> Admin
+    <i class="fas fa-user-shield"></i> Admin - Kasama
 </div>
 <div id="toast" class="toast"></div>
 
 <script>
-    // Your Phone Number
-    const CUSTOMER_PHONE = "0971130511";
+    // KASAMA DISTRICT, NORTHERN PROVINCE, ZAMBIA - CORRECT COORDINATES
+    const KASAMA_CENTER = { lat: -10.2125, lng: 31.1800 };
+    const KASAMA_BOUNDS = {
+        north: -10.1800,
+        south: -10.2500,
+        east: 31.2200,
+        west: 31.1400
+    };
     
-    // Database - Vehicles (Bikes & ULENDO Cars)
-    let vehicles = JSON.parse(localStorage.getItem('kasama_vehicles')) || [
-        { id: 1, name: "Kelvin Banda", registration: "BCA 101", type: "bike", phone: "+260977123456", lat: -10.2100, lng: 31.1800, status: "available", rating: 4.9, rides: 234, online: true },
-        { id: 2, name: "Grace Phiri", registration: "BCA 202", type: "bike", phone: "+260977234567", lat: -10.2085, lng: 31.1825, status: "available", rating: 4.8, rides: 187, online: true },
-        { id: 3, name: "ULENDO Car Service", registration: "ULENDO 001", type: "car", phone: "+260977345678", lat: -10.2120, lng: 31.1780, status: "available", rating: 4.9, rides: 567, online: true },
-        { id: 4, name: "Peter Zulu", registration: "BCA 303", type: "bike", phone: "+260977456789", lat: -10.2140, lng: 31.1795, status: "available", rating: 4.7, rides: 156, online: true },
-        { id: 5, name: "ULENDO Premium", registration: "ULENDO 002", type: "car", phone: "+260977567890", lat: -10.2070, lng: 31.1830, status: "available", rating: 5.0, rides: 423, online: true }
+    const CUSTOMER_PHONE = "0971130511";
+    const KASAMA_LOCATIONS = [
+        "Kasama Town Centre", "Chinsali Road", "Lubwa Mission", "Kasama Airport",
+        "Mungwi Road", "Kasama General Hospital", "Kasama Golf Course", "Chambeshi Bridge",
+        "Kasama Boma", "Isoka Road", "Mbala Road", "Kasama Market"
     ];
     
-    let rides = JSON.parse(localStorage.getItem('kasama_rides_complete')) || [];
-    let currentDriverLocation = null;
+    // Vehicles specifically in Kasama District
+    let vehicles = JSON.parse(localStorage.getItem('kasama_vehicles_official')) || [
+        { id: 1, name: "Kelvin Banda", registration: "BCA 101", type: "bike", phone: "+260977123456", lat: -10.2100, lng: 31.1800, location: "Kasama Town Centre", status: "available", rating: 4.9, rides: 234, online: true },
+        { id: 2, name: "Grace Phiri", registration: "BCA 202", type: "bike", phone: "+260977234567", lat: -10.2085, lng: 31.1825, location: "Chinsali Road", status: "available", rating: 4.8, rides: 187, online: true },
+        { id: 3, name: "ULENDO Car Service", registration: "ULENDO 001", type: "car", phone: "+260977345678", lat: -10.2120, lng: 31.1780, location: "Kasama Market", status: "available", rating: 4.9, rides: 567, online: true },
+        { id: 4, name: "Peter Zulu", registration: "BCA 303", type: "bike", phone: "+260977456789", lat: -10.2140, lng: 31.1795, location: "Lubwa Mission", status: "available", rating: 4.7, rides: 156, online: true },
+        { id: 5, name: "ULENDO Premium", registration: "ULENDO 002", type: "car", phone: "+260977567890", lat: -10.2070, lng: 31.1830, location: "Kasama Airport", status: "available", rating: 5.0, rides: 423, online: true },
+        { id: 6, name: "John Banda", registration: "BCA 404", type: "bike", phone: "+260977678901", lat: -10.2155, lng: 31.1770, location: "Kasama Hospital", status: "available", rating: 4.8, rides: 198, online: true }
+    ];
     
-    // Map variables
+    let rides = JSON.parse(localStorage.getItem('kasama_rides_official')) || [];
     let map;
     let userMarker;
     let vehicleMarkers = [];
-    let driverMarker = null;
-    let userLocation = { lat: -10.2125, lng: 31.1800 };
-    let watchId;
     let currentFilter = "all";
     
     function saveData() {
-        localStorage.setItem('kasama_vehicles', JSON.stringify(vehicles));
-        localStorage.setItem('kasama_rides_complete', JSON.stringify(rides));
+        localStorage.setItem('kasama_vehicles_official', JSON.stringify(vehicles));
+        localStorage.setItem('kasama_rides_official', JSON.stringify(rides));
     }
     
     function showToast(msg) {
@@ -555,7 +569,6 @@
         setTimeout(() => toast.style.display = 'none', 3000);
     }
     
-    // Calculate distance between two points
     function calculateDistance(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -569,7 +582,7 @@
     
     function updateDistances() {
         vehicles.forEach(v => {
-            v.distance = calculateDistance(userLocation.lat, userLocation.lng, v.lat, v.lng);
+            v.distance = calculateDistance(KASAMA_CENTER.lat, KASAMA_CENTER.lng, v.lat, v.lng);
             v.eta = Math.ceil(v.distance * 3);
         });
         vehicles.sort((a, b) => a.distance - b.distance);
@@ -585,73 +598,49 @@
         }
     }
     
-    // Initialize Map
     function initMap() {
-        map = L.map('map').setView([userLocation.lat, userLocation.lng], 15);
+        map = L.map('map').setView([KASAMA_CENTER.lat, KASAMA_CENTER.lng], 14);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap & CARTO',
+            attribution: '&copy; Kasama District, Northern Province, Zambia',
             subdomains: 'abcd',
-            maxZoom: 19
+            maxZoom: 18
         }).addTo(map);
         
-        startLocationTracking();
+        // Add Kasama District marker
+        L.marker([KASAMA_CENTER.lat, KASAMA_CENTER.lng], {
+            icon: L.divIcon({
+                html: `<div style="background: #f5b042; border-radius: 50%; padding: 8px; color: #0a1e2f; border: 2px solid white;">
+                        <i class="fas fa-map-marker-alt"></i>
+                       </div>`,
+                iconSize: [36, 36]
+            })
+        }).addTo(map).bindPopup('<strong>Kasama Town Centre</strong><br>Northern Province, Zambia');
+        
+        // Customer marker at Kasama center
+        const customerIcon = L.divIcon({
+            html: `<div style="background: #3b82f6; border-radius: 50%; padding: 12px; color: white; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
+                    <i class="fas fa-user" style="font-size: 18px;"></i>
+                    <div style="font-size: 8px;">YOU</div>
+                   </div>`,
+            iconSize: [44, 44]
+        });
+        
+        userMarker = L.marker([KASAMA_CENTER.lat, KASAMA_CENTER.lng], { icon: customerIcon })
+            .addTo(map)
+            .bindPopup(`
+                <div style="text-align: center;">
+                    <strong>📍 Your Location</strong><br>
+                    Kasama District, Northern Province<br>
+                    📞 ${CUSTOMER_PHONE}<br>
+                </div>
+            `);
+        
+        document.getElementById('userLocationDisplay').innerHTML = "Kasama District, Northern Province, Zambia";
         updateVehicleMarkers();
         setInterval(updateVehicleMarkers, 8000);
     }
     
-    // Start GPS Tracking for Customer
-    function startLocationTracking() {
-        if (navigator.geolocation) {
-            watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    userLocation = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    
-                    map.setView([userLocation.lat, userLocation.lng], 16);
-                    
-                    // Customer marker (car icon showing customer location)
-                    if (userMarker) {
-                        userMarker.setLatLng([userLocation.lat, userLocation.lng]);
-                    } else {
-                        const customerIcon = L.divIcon({
-                            html: `<div style="background: #3b82f6; border-radius: 50%; padding: 12px; color: white; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <i class="fas fa-user" style="font-size: 18px;"></i>
-                                    <div style="font-size: 9px;">CUSTOMER</div>
-                                   </div>`,
-                            iconSize: [44, 44],
-                            className: 'customer-marker'
-                        });
-                        
-                        userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: customerIcon })
-                            .addTo(map)
-                            .bindPopup(`
-                                <div style="text-align: center;">
-                                    <strong>📍 Your Location</strong><br>
-                                    📞 ${CUSTOMER_PHONE}<br>
-                                    🚗 You are here<br>
-                                    <small>${userLocation.lat.toFixed(6)}°N, ${userLocation.lng.toFixed(6)}°E</small>
-                                </div>
-                            `);
-                    }
-                    
-                    document.getElementById('userLocationDisplay').innerHTML = 
-                        `${userLocation.lat.toFixed(6)}°N, ${userLocation.lng.toFixed(6)}°E`;
-                    
-                    updateDistances();
-                    updateVehicleMarkers();
-                },
-                (error) => {
-                    showToast('Please enable GPS for accurate location');
-                },
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-            );
-        }
-    }
-    
-    // Update vehicle markers (shows both driver and customer locations)
     function updateVehicleMarkers() {
         vehicleMarkers.forEach(marker => map.removeLayer(marker));
         vehicleMarkers = [];
@@ -668,7 +657,7 @@
             const vehicleIcon = L.divIcon({
                 html: `<div style="background: ${isBike ? '#0f3b2c' : '#f5b042'}; border-radius: 50%; padding: 10px; color: white; width: 44px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                         <i class="fas ${isBike ? 'fa-motorcycle' : 'fa-car'}" style="font-size: 18px;"></i>
-                        <div style="font-size: 9px;">${vehicle.distance.toFixed(1)}km</div>
+                        <div style="font-size: 8px;">${vehicle.distance.toFixed(1)}km</div>
                        </div>`,
                 iconSize: [44, 44]
             });
@@ -680,17 +669,17 @@
                         <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
                             <i class="fas ${isBike ? 'fa-motorcycle' : 'fa-car'}" style="font-size: 28px; color: ${isBike ? '#0f3b2c' : '#f5b042'};"></i>
                             <div>
-                                <strong style="font-size: 16px;">${vehicle.name}</strong><br>
-                                <small>${vehicle.registration} • ${isBike ? 'BIKE' : 'ULENDO CAR'}</small>
+                                <strong>${vehicle.name}</strong><br>
+                                <small>${vehicle.registration} • ${vehicle.location}</small>
                             </div>
                         </div>
-                        <div>⭐ ${vehicle.rating}/5.0 (${vehicle.rides} rides)</div>
+                        <div>⭐ ${vehicle.rating}/5.0 (${vehicle.rides} rides in Kasama)</div>
                         <div>📞 <a href="tel:${vehicle.phone}" style="color: #0f3b2c;">${vehicle.phone}</a></div>
-                        <div>📍 ${vehicle.distance.toFixed(2)} km away</div>
+                        <div>📍 ${vehicle.distance.toFixed(2)} km from town centre</div>
                         <div>⏱️ ~${vehicle.eta} min ETA</div>
                         <hr>
                         <button onclick="callDriver('${vehicle.phone}')" style="background: #22c55e; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%; margin-bottom: 5px;">
-                            <i class="fas fa-phone"></i> Call Driver
+                            <i class="fas fa-phone"></i> Call Driver in Kasama
                         </button>
                         <button onclick="smsDriver('${vehicle.phone}', '${vehicle.name}')" style="background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%;">
                             <i class="fas fa-envelope"></i> Send SMS
@@ -708,14 +697,17 @@
     function updateVehiclesList(vehiclesList) {
         const container = document.getElementById('vehiclesListContainer');
         if (vehiclesList.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">🚫 No vehicles available</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">🚫 No vehicles available in Kasama</div>';
             return;
         }
         container.innerHTML = vehiclesList.map(v => `
             <div class="vehicle-item" onclick="focusOnVehicle(${v.lat}, ${v.lng})">
                 <div class="vehicle-info">
                     <div class="vehicle-avatar"><i class="fas ${v.type === 'bike' ? 'fa-motorcycle' : 'fa-car'}"></i></div>
-                    <div><strong>${v.name}</strong><br><small>${v.registration} • ${v.distance.toFixed(1)}km</small></div>
+                    <div>
+                        <strong>${v.name}</strong><br>
+                        <small>${v.registration} • ${v.location} • ${v.distance.toFixed(1)}km</small>
+                    </div>
                 </div>
                 <div class="distance-badge">${v.eta}min</div>
             </div>
@@ -746,13 +738,16 @@
         const name = document.getElementById('driverName').value;
         const phone = document.getElementById('driverPhone').value;
         const type = document.getElementById('vehicleTypeReg').value;
-        const lat = parseFloat(document.getElementById('driverLat').value);
-        const lng = parseFloat(document.getElementById('driverLng').value);
+        const location = document.getElementById('driverLocation').value;
         
         if (!reg || !name || !phone) {
             showToast('Please fill all fields');
             return;
         }
+        
+        // Generate random coordinates within Kasama bounds
+        const lat = KASAMA_CENTER.lat + (Math.random() - 0.5) * 0.03;
+        const lng = KASAMA_CENTER.lng + (Math.random() - 0.5) * 0.03;
         
         const newVehicle = {
             id: vehicles.length + 1,
@@ -760,8 +755,9 @@
             registration: reg,
             type: type,
             phone: phone,
-            lat: lat || -10.2125,
-            lng: lng || 31.1800,
+            lat: lat,
+            lng: lng,
+            location: location || "Kasama Area",
             status: 'available',
             rating: 5.0,
             rides: 0,
@@ -773,9 +769,8 @@
         renderVehiclesListAdmin();
         updateVehicleMarkers();
         updateAdminStats();
-        showToast(`✅ ${type === 'bike' ? 'Bike' : 'Car'} ${reg} registered successfully!`);
+        showToast(`✅ ${type === 'bike' ? 'Bike' : 'Car'} ${reg} registered in Kasama!`);
         
-        // Clear form
         document.getElementById('regNumber').value = '';
         document.getElementById('driverName').value = '';
         document.getElementById('driverPhone').value = '';
@@ -788,7 +783,7 @@
                 <div>
                     <strong>${v.registration}</strong><br>
                     ${v.name}<br>
-                    <small>📞 ${v.phone}</small>
+                    <small>📍 ${v.location}<br>📞 ${v.phone}</small>
                 </div>
                 <div>
                     <span class="${v.online ? 'status-online' : 'status-offline'}">${v.online ? '🟢 Online' : '⚫ Offline'}</span><br>
@@ -807,18 +802,18 @@
             saveData();
             renderVehiclesListAdmin();
             updateVehicleMarkers();
-            showToast(`${vehicle.name} is now ${vehicle.online ? 'Online' : 'Offline'}`);
+            showToast(`${vehicle.name} is now ${vehicle.online ? 'Online in Kasama' : 'Offline'}`);
         }
     }
     
     function deleteVehicle(vehicleId) {
-        if (confirm('Are you sure you want to delete this vehicle?')) {
+        if (confirm('Delete this vehicle from Kasama system?')) {
             vehicles = vehicles.filter(v => v.id !== vehicleId);
             saveData();
             renderVehiclesListAdmin();
             updateVehicleMarkers();
             updateAdminStats();
-            showToast('Vehicle deleted successfully');
+            showToast('Vehicle removed from Kasama fleet');
         }
     }
     
@@ -837,13 +832,13 @@
     }
     
     // Customer Functions
-    function filterBikes() { currentFilter = 'bike'; document.getElementById('vehicleType').value = 'bike'; updateVehicleMarkers(); showToast('🟢 Showing bikes only'); }
-    function filterCars() { currentFilter = 'car'; document.getElementById('vehicleType').value = 'car'; updateVehicleMarkers(); showToast('🟡 Showing ULENDO cars only'); }
+    function filterBikes() { currentFilter = 'bike'; document.getElementById('vehicleType').value = 'bike'; updateVehicleMarkers(); showToast('🟢 Showing bikes in Kasama'); }
+    function filterCars() { currentFilter = 'car'; document.getElementById('vehicleType').value = 'car'; updateVehicleMarkers(); showToast('🟡 Showing ULENDO cars in Kasama'); }
     function filterVehicles() { currentFilter = document.getElementById('vehicleType').value; updateVehicleMarkers(); }
-    function centerOnMe() { if (userLocation) { map.setView([userLocation.lat, userLocation.lng], 16); showToast('📍 Centered on your location'); } }
-    function focusOnVehicle(lat, lng) { map.setView([lat, lng], 17); showToast('📍 Vehicle location focused'); }
+    function centerOnKasama() { map.setView([KASAMA_CENTER.lat, KASAMA_CENTER.lng], 14); showToast('📍 Kasama Town Centre, Northern Province'); }
+    function focusOnVehicle(lat, lng) { map.setView([lat, lng], 16); showToast('📍 Vehicle location in Kasama'); }
     function callDriver(phone) { if (phone) window.location.href = `tel:${phone}`; }
-    function smsDriver(phone, name) { if (phone) window.location.href = `sms:${phone}?body=Hello ${name}, I need a ride. My number is ${CUSTOMER_PHONE}`; }
+    function smsDriver(phone, name) { if (phone) window.location.href = `sms:${phone}?body=Hello ${name}, I need a ride in Kasama, Zambia. My number is ${CUSTOMER_PHONE}`; }
     
     function requestRide() {
         const pickup = document.getElementById('pickup').value;
@@ -852,10 +847,10 @@
         
         let available = vehicles.filter(v => v.online);
         if (vehicleType !== 'all') available = available.filter(v => v.type === vehicleType);
-        if (available.length === 0) { showToast('No vehicles available!'); return; }
+        if (available.length === 0) { showToast('No vehicles available in Kasama!'); return; }
         
         const selected = available[0];
-        const fare = vehicleType === 'bike' ? Math.floor(15 + Math.random() * 15) : Math.floor(30 + Math.random() * 25);
+        const fare = vehicleType === 'bike' ? Math.floor(15 + Math.random() * 15) : Math.floor(30 + Math.random() * 20);
         
         const ride = { id: Date.now(), rideNumber: `KSM${Date.now()}`, customerPhone: CUSTOMER_PHONE, pickup, dropoff, fare, vehicleType, driverName: selected.name, driverPhone: selected.phone, status: 'pending_payment', createdAt: new Date().toISOString() };
         rides.push(ride);
@@ -863,8 +858,8 @@
         
         const panel = document.getElementById('tripPanel');
         panel.style.display = 'block';
-        panel.innerHTML = `<h4><i class="fas fa-clock"></i> Ride Requested!</h4><p><strong>Driver:</strong> ${ride.driverName}<br><strong>Amount:</strong> ZMW ${ride.fare}</p><button class="btn-primary" style="background:#22c55e" onclick="processPayment('${ride.id}')"><i class="fas fa-credit-card"></i> Pay with MTN</button><button class="btn-primary" style="background:#ef4444; margin-top:8px" onclick="document.getElementById('tripPanel').style.display='none'">Cancel</button>`;
-        showToast(`Connecting to ${ride.driverName}...`);
+        panel.innerHTML = `<h4><i class="fas fa-clock"></i> Ride Requested in Kasama!</h4><p><strong>Driver:</strong> ${ride.driverName}<br><strong>Amount:</strong> ZMW ${ride.fare}</p><button class="btn-primary" style="background:#22c55e" onclick="processPayment('${ride.id}')"><i class="fas fa-credit-card"></i> Pay with MTN Mobile Money</button><button class="btn-primary" style="background:#ef4444; margin-top:8px" onclick="document.getElementById('tripPanel').style.display='none'">Cancel</button>`;
+        showToast(`Connecting to ${ride.driverName} in Kasama...`);
     }
     
     function processPayment(rideId) {
@@ -874,14 +869,14 @@
         if (ride) {
             ride.status = 'confirmed';
             saveData();
-            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-check-circle" style="color:#22c55e"></i> Payment Successful!</h4><p>${ride.driverName} is coming to pick you up.</p><button class="btn-primary" onclick="completeRide('${ride.id}')">Complete Ride</button>`;
-            showToast('✅ Payment confirmed! Driver on the way.');
+            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-check-circle" style="color:#22c55e"></i> Payment Successful!</h4><p>${ride.driverName} is coming to pick you up in Kasama.</p><button class="btn-primary" onclick="completeRide('${ride.id}')">Complete Ride</button>`;
+            showToast('✅ Payment confirmed! Driver on the way in Kasama.');
         }
     }
     
     function completeRide(rideId) {
         const ride = rides.find(r => r.id == rideId);
-        if (ride) { ride.status = 'completed'; ride.completedAt = new Date().toISOString(); saveData(); document.getElementById('tripPanel').style.display = 'none'; showToast('🎉 Ride completed!'); }
+        if (ride) { ride.status = 'completed'; ride.completedAt = new Date().toISOString(); saveData(); document.getElementById('tripPanel').style.display = 'none'; showToast('🎉 Ride completed in Kasama! Thank you!'); }
     }
     
     function switchTab(tab) {
@@ -891,17 +886,17 @@
             const userRides = rides.filter(r => r.customerPhone === CUSTOMER_PHONE);
             const panel = document.getElementById('tripPanel');
             panel.style.display = 'block';
-            panel.innerHTML = `<h4><i class="fas fa-history"></i> My Rides</h4>${userRides.length === 0 ? '<p>No rides yet</p>' : userRides.slice(-5).reverse().map(r => `<div style="padding:8px; border-bottom:1px solid #eee;"><strong>${r.rideNumber}</strong><br>${r.pickup} → ${r.dropoff}<br>ZMW ${r.fare} • ${r.status}</div>`).join('')}<button class="btn-primary" style="margin-top:12px" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
+            panel.innerHTML = `<h4><i class="fas fa-history"></i> My Rides in Kasama</h4>${userRides.length === 0 ? '<p>No rides yet in Kasama</p>' : userRides.slice(-5).reverse().map(r => `<div style="padding:8px; border-bottom:1px solid #eee;"><strong>${r.rideNumber}</strong><br>${r.pickup} → ${r.dropoff}<br>ZMW ${r.fare} • ${r.status}</div>`).join('')}<button class="btn-primary" style="margin-top:12px" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
         } else if (tab === 'home') { document.getElementById('tripPanel').style.display = 'none'; }
         else if (tab === 'support') {
             document.getElementById('tripPanel').style.display = 'block';
-            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-headset"></i> Support</h4><div><p><i class="fas fa-phone"></i> <a href="tel:+260977123456">+260 97 712 3456</a></p><p><i class="fab fa-whatsapp"></i> <a href="https://wa.me/260977123456">WhatsApp</a></p><p><strong>Your Number:</strong> ${CUSTOMER_PHONE}</p></div><button class="btn-primary" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
+            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-headset"></i> Kasama Support</h4><div><p><i class="fas fa-phone"></i> <a href="tel:+260977123456">+260 97 712 3456</a></p><p><i class="fab fa-whatsapp"></i> <a href="https://wa.me/260977123456">WhatsApp Support</a></p><p><strong>📍 Kasama District, Northern Province, Zambia</strong></p><p><strong>Your Number:</strong> ${CUSTOMER_PHONE}</p></div><button class="btn-primary" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
         }
     }
     
-    // Make global functions
+    // Global functions
     window.filterBikes = filterBikes; window.filterCars = filterCars; window.filterVehicles = filterVehicles;
-    window.centerOnMe = centerOnMe; window.focusOnVehicle = focusOnVehicle; window.callDriver = callDriver;
+    window.centerOnKasama = centerOnKasama; window.focusOnVehicle = focusOnVehicle; window.callDriver = callDriver;
     window.smsDriver = smsDriver; window.requestRide = requestRide; window.processPayment = processPayment;
     window.completeRide = completeRide; window.switchTab = switchTab; window.toggleAdminPanel = toggleAdminPanel;
     window.closeAdminPanel = closeAdminPanel; window.registerVehicle = registerVehicle; window.toggleDriverStatus = toggleDriverStatus;
@@ -909,7 +904,7 @@
     
     // Initialize
     initMap();
-    showToast(`📍 Welcome! Your number: ${CUSTOMER_PHONE} | Admin: bottom-right button`);
+    showToast(`📍 Welcome to Kasama District, Northern Province, Zambia! | Your number: ${CUSTOMER_PHONE}`);
 </script>
 </body>
 </html>

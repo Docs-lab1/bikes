@@ -3,13 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Kasama Rides - Real GPS Tracking | Live Vehicles Map</title>
-    <!-- Leaflet CSS & JS (Free OpenStreetMap) -->
+    <title>Kasama Rides - Complete Admin + Live Driver/Customer Tracking</title>
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet Routing Machine for directions -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.css" />
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Google Fonts -->
@@ -85,6 +82,7 @@
             border-radius: 30px;
             font-size: 0.65rem;
             font-weight: 600;
+            cursor: pointer;
         }
 
         .location-info {
@@ -98,11 +96,11 @@
             border-radius: 24px;
             overflow: hidden;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            height: 320px;
+            height: 280px;
             border: 2px solid white;
         }
 
-        #map {
+        #map, #driverMap {
             height: 100%;
             width: 100%;
         }
@@ -145,7 +143,7 @@
             color: #64748b;
         }
 
-        .booking-card {
+        .booking-card, .admin-card {
             background: white;
             margin: 16px;
             padding: 20px;
@@ -179,7 +177,7 @@
             width: 24px;
         }
 
-        input, select {
+        input, select, textarea {
             border: none;
             background: transparent;
             width: 100%;
@@ -215,12 +213,16 @@
             transform: scale(0.98);
         }
 
+        .btn-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
         .nearby-list {
             margin: 16px;
             background: white;
             border-radius: 24px;
             padding: 16px;
-            max-height: 220px;
+            max-height: 200px;
             overflow-y: auto;
         }
 
@@ -345,24 +347,53 @@
             50% { opacity: 0.6; }
         }
 
-        .driver-car-icon, .driver-bike-icon {
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        .admin-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #0a1e2f;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .current-location-marker {
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-            animation: bounce 1s infinite;
+        .hidden {
+            display: none;
         }
 
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
+        .driver-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .driver-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .status-online {
+            color: #22c55e;
+        }
+
+        .status-offline {
+            color: #ef4444;
         }
     </style>
 </head>
 <body>
 <div class="phone">
-    <div id="customerApp" style="display: flex; flex-direction: column; height: 100%;">
+    <!-- Customer Main App -->
+    <div id="customerApp">
         <div class="header">
             <div class="header-top">
                 <div class="logo"><i class="fas fa-motorcycle"></i> Kasama Rides</div>
@@ -370,7 +401,7 @@
             </div>
             <div class="location-info">
                 <i class="fas fa-location-dot"></i> <span id="userLocationDisplay">Getting your location...</span>
-                <span class="live-badge" style="margin-left: 8px;">🟢 LIVE TRACKING</span>
+                <span class="live-badge">🟢 LIVE</span>
             </div>
         </div>
         <div class="app-content">
@@ -406,8 +437,8 @@
                     <i class="fas fa-motorcycle"></i>
                     <select id="vehicleType" onchange="filterVehicles()">
                         <option value="all">🚀 All Vehicles</option>
-                        <option value="bike">🏍️ Motor Bike (Fast & Cheap)</option>
-                        <option value="car">🚗 ULENDO Car (Comfort)</option>
+                        <option value="bike">🏍️ Motor Bike</option>
+                        <option value="car">🚗 ULENDO Car</option>
                     </select>
                 </div>
                 <div class="price-box">
@@ -419,8 +450,8 @@
                 </button>
             </div>
             <div class="nearby-list">
-                <div class="section-title"><i class="fas fa-taxi"></i> Nearby Vehicles (Real-time)</div>
-                <div id="vehiclesListContainer">Loading nearby vehicles...</div>
+                <div class="section-title"><i class="fas fa-taxi"></i> Nearby Vehicles</div>
+                <div id="vehiclesListContainer">Loading...</div>
             </div>
             <div id="tripPanel" class="trip-panel"></div>
         </div>
@@ -430,33 +461,92 @@
             <div class="nav-item" onclick="switchTab('support')"><i class="fas fa-headset"></i><div>Support</div></div>
         </div>
     </div>
+
+    <!-- Admin Panel -->
+    <div id="adminPanel" class="hidden">
+        <div class="header">
+            <div class="header-top">
+                <div class="logo"><i class="fas fa-shield-alt"></i> Admin Dashboard</div>
+                <div class="badge" onclick="closeAdminPanel()"><i class="fas fa-times"></i> Close</div>
+            </div>
+            <div class="location-info">Manage Bikes, Drivers & View Stats</div>
+        </div>
+        <div class="app-content">
+            <!-- Add New Bike Section -->
+            <div class="admin-card">
+                <div class="section-title"><i class="fas fa-plus-circle"></i> Register New Bike/Driver</div>
+                <div class="input-group"><i class="fas fa-motorcycle"></i><input type="text" id="regNumber" placeholder="Registration Number (e.g., BCA 101)"></div>
+                <div class="input-group"><i class="fas fa-user"></i><input type="text" id="driverName" placeholder="Driver Full Name"></div>
+                <div class="input-group"><i class="fas fa-phone"></i><input type="text" id="driverPhone" placeholder="Driver Phone Number"></div>
+                <div class="input-group"><i class="fas fa-car"></i>
+                    <select id="vehicleTypeReg">
+                        <option value="bike">🏍️ Motor Bike</option>
+                        <option value="car">🚗 ULENDO Car</option>
+                    </select>
+                </div>
+                <div class="input-group"><i class="fas fa-map-marker-alt"></i><input type="text" id="driverLat" placeholder="Latitude" value="-10.2125"></div>
+                <div class="input-group"><i class="fas fa-map-marker-alt"></i><input type="text" id="driverLng" placeholder="Longitude" value="31.1800"></div>
+                <button class="btn-primary" onclick="registerVehicle()"><i class="fas fa-save"></i> Register Vehicle</button>
+            </div>
+
+            <!-- Active Drivers/Bikes List -->
+            <div class="admin-card">
+                <div class="section-title"><i class="fas fa-list"></i> Registered Vehicles</div>
+                <div id="vehiclesListAdmin" class="driver-list"></div>
+            </div>
+
+            <!-- Statistics -->
+            <div class="admin-card">
+                <div class="section-title"><i class="fas fa-chart-line"></i> Platform Statistics</div>
+                <div class="stats-grid">
+                    <div class="stat-card"><i class="fas fa-motorcycle"></i><div class="value" id="totalBikes">0</div><div class="label">Total Bikes</div></div>
+                    <div class="stat-card"><i class="fas fa-car"></i><div class="value" id="totalCars">0</div><div class="label">Total Cars</div></div>
+                    <div class="stat-card"><i class="fas fa-users"></i><div class="value" id="totalDrivers">0</div><div class="label">Active Drivers</div></div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card"><i class="fas fa-money-bill"></i><div class="value" id="totalRevenue">ZMW 0</div><div class="label">Total Revenue</div></div>
+                    <div class="stat-card"><i class="fas fa-check-circle"></i><div class="value" id="totalRides">0</div><div class="label">Completed Rides</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Toggle Button -->
+<div class="admin-toggle" onclick="toggleAdminPanel()">
+    <i class="fas fa-user-shield"></i> Admin
 </div>
 <div id="toast" class="toast"></div>
 
 <script>
     // Your Phone Number
-    const MY_PHONE = "0971130511";
+    const CUSTOMER_PHONE = "0971130511";
     
-    // Real Vehicles Data (Bikes & ULENDO Cars around Kasama)
-    let vehicles = [
-        { id: 1, name: "Kelvin Banda", registration: "BCA 101", type: "bike", phone: "+260977123456", lat: -10.2100, lng: 31.1800, status: "available", rating: 4.9, completedRides: 234 },
-        { id: 2, name: "Grace Phiri", registration: "BCA 202", type: "bike", phone: "+260977234567", lat: -10.2085, lng: 31.1825, status: "available", rating: 4.8, completedRides: 187 },
-        { id: 3, name: "ULENDO Car Service", registration: "ULENDO 001", type: "car", phone: "+260977345678", lat: -10.2120, lng: 31.1780, status: "available", rating: 4.9, completedRides: 567 },
-        { id: 4, name: "Peter Zulu", registration: "BCA 303", type: "bike", phone: "+260977456789", lat: -10.2140, lng: 31.1795, status: "available", rating: 4.7, completedRides: 156 },
-        { id: 5, name: "ULENDO Premium", registration: "ULENDO 002", type: "car", phone: "+260977567890", lat: -10.2070, lng: 31.1830, status: "available", rating: 5.0, completedRides: 423 },
-        { id: 6, name: "John Banda", registration: "BCA 404", type: "bike", phone: "+260977678901", lat: -10.2155, lng: 31.1770, status: "available", rating: 4.8, completedRides: 198 },
-        { id: 7, name: "ULENDO Express", registration: "ULENDO 003", type: "car", phone: "+260977789012", lat: -10.2095, lng: 31.1845, status: "available", rating: 4.8, completedRides: 312 },
-        { id: 8, name: "Mary Zulu", registration: "BCA 505", type: "bike", phone: "+260977890123", lat: -10.2130, lng: 31.1760, status: "available", rating: 4.9, completedRides: 145 }
+    // Database - Vehicles (Bikes & ULENDO Cars)
+    let vehicles = JSON.parse(localStorage.getItem('kasama_vehicles')) || [
+        { id: 1, name: "Kelvin Banda", registration: "BCA 101", type: "bike", phone: "+260977123456", lat: -10.2100, lng: 31.1800, status: "available", rating: 4.9, rides: 234, online: true },
+        { id: 2, name: "Grace Phiri", registration: "BCA 202", type: "bike", phone: "+260977234567", lat: -10.2085, lng: 31.1825, status: "available", rating: 4.8, rides: 187, online: true },
+        { id: 3, name: "ULENDO Car Service", registration: "ULENDO 001", type: "car", phone: "+260977345678", lat: -10.2120, lng: 31.1780, status: "available", rating: 4.9, rides: 567, online: true },
+        { id: 4, name: "Peter Zulu", registration: "BCA 303", type: "bike", phone: "+260977456789", lat: -10.2140, lng: 31.1795, status: "available", rating: 4.7, rides: 156, online: true },
+        { id: 5, name: "ULENDO Premium", registration: "ULENDO 002", type: "car", phone: "+260977567890", lat: -10.2070, lng: 31.1830, status: "available", rating: 5.0, rides: 423, online: true }
     ];
     
-    let rides = JSON.parse(localStorage.getItem('kasama_rides_live')) || [];
+    let rides = JSON.parse(localStorage.getItem('kasama_rides_complete')) || [];
+    let currentDriverLocation = null;
+    
+    // Map variables
     let map;
     let userMarker;
     let vehicleMarkers = [];
+    let driverMarker = null;
     let userLocation = { lat: -10.2125, lng: 31.1800 };
     let watchId;
     let currentFilter = "all";
-    let routingControl = null;
+    
+    function saveData() {
+        localStorage.setItem('kasama_vehicles', JSON.stringify(vehicles));
+        localStorage.setItem('kasama_rides_complete', JSON.stringify(rides));
+    }
     
     function showToast(msg) {
         const toast = document.getElementById('toast');
@@ -465,11 +555,7 @@
         setTimeout(() => toast.style.display = 'none', 3000);
     }
     
-    function saveRides() {
-        localStorage.setItem('kasama_rides_live', JSON.stringify(rides));
-    }
-    
-    // Calculate distance between two points in km
+    // Calculate distance between two points
     function calculateDistance(lat1, lng1, lat2, lng2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -481,7 +567,6 @@
         return R * c;
     }
     
-    // Update distances for all vehicles
     function updateDistances() {
         vehicles.forEach(v => {
             v.distance = calculateDistance(userLocation.lat, userLocation.lng, v.lat, v.lng);
@@ -489,14 +574,13 @@
         });
         vehicles.sort((a, b) => a.distance - b.distance);
         
-        // Update stats
-        const bikes = vehicles.filter(v => v.type === 'bike' && v.distance < 5);
-        const cars = vehicles.filter(v => v.type === 'car' && v.distance < 5);
+        const bikes = vehicles.filter(v => v.type === 'bike' && v.online);
+        const cars = vehicles.filter(v => v.type === 'car' && v.online);
         document.getElementById('nearbyCount').innerHTML = bikes.length;
         document.getElementById('carCount').innerHTML = cars.length;
         
         if (vehicles.length > 0) {
-            const minEta = Math.min(...vehicles.map(v => v.eta));
+            const minEta = Math.min(...vehicles.filter(v => v.online).map(v => v.eta));
             document.getElementById('etaDisplay').innerHTML = `~${minEta}`;
         }
     }
@@ -506,10 +590,9 @@
         map = L.map('map').setView([userLocation.lat, userLocation.lng], 15);
         
         L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            attribution: '&copy; OpenStreetMap & CARTO',
             subdomains: 'abcd',
-            maxZoom: 19,
-            minZoom: 10
+            maxZoom: 19
         }).addTo(map);
         
         startLocationTracking();
@@ -517,7 +600,7 @@
         setInterval(updateVehicleMarkers, 8000);
     }
     
-    // Start GPS Tracking
+    // Start GPS Tracking for Customer
     function startLocationTracking() {
         if (navigator.geolocation) {
             watchId = navigator.geolocation.watchPosition(
@@ -529,29 +612,29 @@
                     
                     map.setView([userLocation.lat, userLocation.lng], 16);
                     
-                    // Update user marker (Car icon)
+                    // Customer marker (car icon showing customer location)
                     if (userMarker) {
                         userMarker.setLatLng([userLocation.lat, userLocation.lng]);
                     } else {
-                        const carIcon = L.divIcon({
+                        const customerIcon = L.divIcon({
                             html: `<div style="background: #3b82f6; border-radius: 50%; padding: 12px; color: white; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
-                                    <i class="fas fa-car" style="font-size: 18px;"></i>
+                                    <i class="fas fa-user" style="font-size: 18px;"></i>
+                                    <div style="font-size: 9px;">CUSTOMER</div>
                                    </div>`,
                             iconSize: [44, 44],
-                            className: 'current-location-marker'
+                            className: 'customer-marker'
                         });
                         
-                        userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: carIcon })
+                        userMarker = L.marker([userLocation.lat, userLocation.lng], { icon: customerIcon })
                             .addTo(map)
                             .bindPopup(`
                                 <div style="text-align: center;">
                                     <strong>📍 Your Location</strong><br>
-                                    📞 ${MY_PHONE}<br>
+                                    📞 ${CUSTOMER_PHONE}<br>
                                     🚗 You are here<br>
                                     <small>${userLocation.lat.toFixed(6)}°N, ${userLocation.lng.toFixed(6)}°E</small>
                                 </div>
-                            `)
-                            .openPopup();
+                            `);
                     }
                     
                     document.getElementById('userLocationDisplay').innerHTML = 
@@ -561,31 +644,23 @@
                     updateVehicleMarkers();
                 },
                 (error) => {
-                    console.error('GPS Error:', error);
-                    showToast('Please enable GPS for accurate location tracking');
-                    document.getElementById('userLocationDisplay').innerHTML = 'Enable GPS for accuracy';
+                    showToast('Please enable GPS for accurate location');
                 },
-                {
-                    enableHighAccuracy: true,
-                    maximumAge: 0,
-                    timeout: 10000
-                }
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
             );
-        } else {
-            showToast('Geolocation not supported');
         }
     }
     
-    // Update vehicle markers on map
+    // Update vehicle markers (shows both driver and customer locations)
     function updateVehicleMarkers() {
         vehicleMarkers.forEach(marker => map.removeLayer(marker));
         vehicleMarkers = [];
         
         updateDistances();
         
-        let filteredVehicles = vehicles;
+        let filteredVehicles = vehicles.filter(v => v.online);
         if (currentFilter !== 'all') {
-            filteredVehicles = vehicles.filter(v => v.type === currentFilter);
+            filteredVehicles = filteredVehicles.filter(v => v.type === currentFilter);
         }
         
         filteredVehicles.forEach(vehicle => {
@@ -593,10 +668,9 @@
             const vehicleIcon = L.divIcon({
                 html: `<div style="background: ${isBike ? '#0f3b2c' : '#f5b042'}; border-radius: 50%; padding: 10px; color: white; width: 44px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2);">
                         <i class="fas ${isBike ? 'fa-motorcycle' : 'fa-car'}" style="font-size: 18px;"></i>
-                        <div style="font-size: 9px; margin-top: 2px;">${vehicle.distance.toFixed(1)}km</div>
+                        <div style="font-size: 9px;">${vehicle.distance.toFixed(1)}km</div>
                        </div>`,
-                iconSize: [44, 44],
-                className: 'driver-bike-icon'
+                iconSize: [44, 44]
             });
             
             const marker = L.marker([vehicle.lat, vehicle.lng], { icon: vehicleIcon })
@@ -610,17 +684,15 @@
                                 <small>${vehicle.registration} • ${isBike ? 'BIKE' : 'ULENDO CAR'}</small>
                             </div>
                         </div>
-                        <div style="margin: 8px 0;">
-                            <div>⭐ ${vehicle.rating}/5.0 (${vehicle.completedRides} rides)</div>
-                            <div>📞 <a href="tel:${vehicle.phone}" style="color: #0f3b2c; text-decoration: none;">${vehicle.phone}</a></div>
-                            <div>📍 ${vehicle.distance.toFixed(2)} km away</div>
-                            <div>⏱️ ~${vehicle.eta} min ETA</div>
-                        </div>
-                        <hr style="margin: 8px 0;">
-                        <button onclick="callDriver('${vehicle.phone}')" style="background: #22c55e; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%; margin-bottom: 5px; cursor: pointer;">
+                        <div>⭐ ${vehicle.rating}/5.0 (${vehicle.rides} rides)</div>
+                        <div>📞 <a href="tel:${vehicle.phone}" style="color: #0f3b2c;">${vehicle.phone}</a></div>
+                        <div>📍 ${vehicle.distance.toFixed(2)} km away</div>
+                        <div>⏱️ ~${vehicle.eta} min ETA</div>
+                        <hr>
+                        <button onclick="callDriver('${vehicle.phone}')" style="background: #22c55e; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%; margin-bottom: 5px;">
                             <i class="fas fa-phone"></i> Call Driver
                         </button>
-                        <button onclick="smsDriver('${vehicle.phone}', '${vehicle.name}')" style="background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%; cursor: pointer;">
+                        <button onclick="smsDriver('${vehicle.phone}', '${vehicle.name}')" style="background: #3b82f6; color: white; border: none; padding: 8px; border-radius: 20px; width: 100%;">
                             <i class="fas fa-envelope"></i> Send SMS
                         </button>
                     </div>
@@ -630,270 +702,214 @@
         });
         
         updateVehiclesList(filteredVehicles);
+        updateAdminStats();
     }
     
-    // Update vehicles list
     function updateVehiclesList(vehiclesList) {
         const container = document.getElementById('vehiclesListContainer');
-        
         if (vehiclesList.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px;">🚫 No vehicles available nearby</div>';
+            container.innerHTML = '<div style="text-align: center; padding: 40px;">🚫 No vehicles available</div>';
             return;
         }
-        
         container.innerHTML = vehiclesList.map(v => `
             <div class="vehicle-item" onclick="focusOnVehicle(${v.lat}, ${v.lng})">
                 <div class="vehicle-info">
-                    <div class="vehicle-avatar">
-                        <i class="fas ${v.type === 'bike' ? 'fa-motorcycle' : 'fa-car'}"></i>
-                    </div>
-                    <div class="vehicle-details">
-                        <strong>${v.name}</strong>
-                        <small>${v.registration} • ${v.type === 'bike' ? '🏍️ Bike' : '🚗 ULENDO Car'}</small>
-                        <div><small>⭐ ${v.rating} | ${v.distance.toFixed(1)}km away</small></div>
-                    </div>
+                    <div class="vehicle-avatar"><i class="fas ${v.type === 'bike' ? 'fa-motorcycle' : 'fa-car'}"></i></div>
+                    <div><strong>${v.name}</strong><br><small>${v.registration} • ${v.distance.toFixed(1)}km</small></div>
                 </div>
                 <div class="distance-badge">${v.eta}min</div>
             </div>
         `).join('');
     }
     
-    // Filter functions
-    function filterBikes() {
-        currentFilter = 'bike';
-        document.getElementById('vehicleType').value = 'bike';
-        updateVehicleMarkers();
-        showToast('🟢 Showing only bikes nearby');
-    }
-    
-    function filterCars() {
-        currentFilter = 'car';
-        document.getElementById('vehicleType').value = 'car';
-        updateVehicleMarkers();
-        showToast('🟡 Showing only ULENDO cars nearby');
-    }
-    
-    function filterVehicles() {
-        currentFilter = document.getElementById('vehicleType').value;
-        updateVehicleMarkers();
-    }
-    
-    function centerOnMe() {
-        if (userLocation) {
-            map.setView([userLocation.lat, userLocation.lng], 16);
-            showToast('📍 Centered on your location');
+    // Admin Functions
+    function toggleAdminPanel() {
+        const adminPanel = document.getElementById('adminPanel');
+        const customerApp = document.getElementById('customerApp');
+        if (adminPanel.classList.contains('hidden')) {
+            adminPanel.classList.remove('hidden');
+            customerApp.classList.add('hidden');
+            renderVehiclesListAdmin();
+            updateAdminStats();
+        } else {
+            closeAdminPanel();
         }
     }
     
-    function focusOnVehicle(lat, lng) {
-        map.setView([lat, lng], 17);
-        showToast('📍 Vehicle location focused');
+    function closeAdminPanel() {
+        document.getElementById('adminPanel').classList.add('hidden');
+        document.getElementById('customerApp').classList.remove('hidden');
     }
     
-    function callDriver(phone) {
-        if (phone) {
-            window.location.href = `tel:${phone}`;
-            showToast(`Calling ${phone}...`);
+    function registerVehicle() {
+        const reg = document.getElementById('regNumber').value;
+        const name = document.getElementById('driverName').value;
+        const phone = document.getElementById('driverPhone').value;
+        const type = document.getElementById('vehicleTypeReg').value;
+        const lat = parseFloat(document.getElementById('driverLat').value);
+        const lng = parseFloat(document.getElementById('driverLng').value);
+        
+        if (!reg || !name || !phone) {
+            showToast('Please fill all fields');
+            return;
+        }
+        
+        const newVehicle = {
+            id: vehicles.length + 1,
+            name: name,
+            registration: reg,
+            type: type,
+            phone: phone,
+            lat: lat || -10.2125,
+            lng: lng || 31.1800,
+            status: 'available',
+            rating: 5.0,
+            rides: 0,
+            online: true
+        };
+        
+        vehicles.push(newVehicle);
+        saveData();
+        renderVehiclesListAdmin();
+        updateVehicleMarkers();
+        updateAdminStats();
+        showToast(`✅ ${type === 'bike' ? 'Bike' : 'Car'} ${reg} registered successfully!`);
+        
+        // Clear form
+        document.getElementById('regNumber').value = '';
+        document.getElementById('driverName').value = '';
+        document.getElementById('driverPhone').value = '';
+    }
+    
+    function renderVehiclesListAdmin() {
+        const container = document.getElementById('vehiclesListAdmin');
+        container.innerHTML = vehicles.map(v => `
+            <div class="driver-item">
+                <div>
+                    <strong>${v.registration}</strong><br>
+                    ${v.name}<br>
+                    <small>📞 ${v.phone}</small>
+                </div>
+                <div>
+                    <span class="${v.online ? 'status-online' : 'status-offline'}">${v.online ? '🟢 Online' : '⚫ Offline'}</span><br>
+                    <button onclick="toggleDriverStatus(${v.id})" style="background: #f5b042; border: none; padding: 4px 12px; border-radius: 20px; margin-top: 4px; cursor: pointer;">Toggle</button>
+                    <button onclick="deleteVehicle(${v.id})" style="background: #ef4444; color: white; border: none; padding: 4px 12px; border-radius: 20px; margin-top: 4px; cursor: pointer;">Delete</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    function toggleDriverStatus(vehicleId) {
+        const vehicle = vehicles.find(v => v.id === vehicleId);
+        if (vehicle) {
+            vehicle.online = !vehicle.online;
+            vehicle.status = vehicle.online ? 'available' : 'offline';
+            saveData();
+            renderVehiclesListAdmin();
+            updateVehicleMarkers();
+            showToast(`${vehicle.name} is now ${vehicle.online ? 'Online' : 'Offline'}`);
         }
     }
     
-    function smsDriver(phone, name) {
-        if (phone) {
-            const message = encodeURIComponent(`Hello ${name}, I need a ride in Kasama. My number is ${MY_PHONE}. Please pick me up!`);
-            window.location.href = `sms:${phone}?body=${message}`;
-            showToast(`Opening SMS to ${name}`);
+    function deleteVehicle(vehicleId) {
+        if (confirm('Are you sure you want to delete this vehicle?')) {
+            vehicles = vehicles.filter(v => v.id !== vehicleId);
+            saveData();
+            renderVehiclesListAdmin();
+            updateVehicleMarkers();
+            updateAdminStats();
+            showToast('Vehicle deleted successfully');
         }
     }
+    
+    function updateAdminStats() {
+        const totalBikes = vehicles.filter(v => v.type === 'bike').length;
+        const totalCars = vehicles.filter(v => v.type === 'car').length;
+        const activeDrivers = vehicles.filter(v => v.online).length;
+        const totalRevenue = rides.reduce((sum, r) => sum + (r.fare || 0), 0);
+        const completedRides = rides.filter(r => r.status === 'completed').length;
+        
+        document.getElementById('totalBikes').innerHTML = totalBikes;
+        document.getElementById('totalCars').innerHTML = totalCars;
+        document.getElementById('totalDrivers').innerHTML = activeDrivers;
+        document.getElementById('totalRevenue').innerHTML = `ZMW ${totalRevenue}`;
+        document.getElementById('totalRides').innerHTML = completedRides;
+    }
+    
+    // Customer Functions
+    function filterBikes() { currentFilter = 'bike'; document.getElementById('vehicleType').value = 'bike'; updateVehicleMarkers(); showToast('🟢 Showing bikes only'); }
+    function filterCars() { currentFilter = 'car'; document.getElementById('vehicleType').value = 'car'; updateVehicleMarkers(); showToast('🟡 Showing ULENDO cars only'); }
+    function filterVehicles() { currentFilter = document.getElementById('vehicleType').value; updateVehicleMarkers(); }
+    function centerOnMe() { if (userLocation) { map.setView([userLocation.lat, userLocation.lng], 16); showToast('📍 Centered on your location'); } }
+    function focusOnVehicle(lat, lng) { map.setView([lat, lng], 17); showToast('📍 Vehicle location focused'); }
+    function callDriver(phone) { if (phone) window.location.href = `tel:${phone}`; }
+    function smsDriver(phone, name) { if (phone) window.location.href = `sms:${phone}?body=Hello ${name}, I need a ride. My number is ${CUSTOMER_PHONE}`; }
     
     function requestRide() {
         const pickup = document.getElementById('pickup').value;
         const dropoff = document.getElementById('dropoff').value;
         const vehicleType = document.getElementById('vehicleType').value;
         
-        if (!pickup || !dropoff) {
-            showToast('Please enter pickup and dropoff locations');
-            return;
-        }
+        let available = vehicles.filter(v => v.online);
+        if (vehicleType !== 'all') available = available.filter(v => v.type === vehicleType);
+        if (available.length === 0) { showToast('No vehicles available!'); return; }
         
-        let availableVehicles = vehicles.filter(v => v.status === 'available');
-        if (vehicleType !== 'all') {
-            availableVehicles = availableVehicles.filter(v => v.type === vehicleType);
-        }
-        
-        if (availableVehicles.length === 0) {
-            showToast(`No ${vehicleType === 'all' ? 'vehicles' : vehicleType === 'bike' ? 'bikes' : 'cars'} available!`);
-            return;
-        }
-        
-        const selectedVehicle = availableVehicles[0];
+        const selected = available[0];
         const fare = vehicleType === 'bike' ? Math.floor(15 + Math.random() * 15) : Math.floor(30 + Math.random() * 25);
         
-        const ride = {
-            id: Date.now(),
-            rideNumber: `KSM${Date.now()}`,
-            customerPhone: MY_PHONE,
-            pickup,
-            dropoff,
-            fare,
-            vehicleType,
-            driverName: selectedVehicle.name,
-            driverPhone: selectedVehicle.phone,
-            status: 'pending_payment',
-            createdAt: new Date().toISOString()
-        };
-        
+        const ride = { id: Date.now(), rideNumber: `KSM${Date.now()}`, customerPhone: CUSTOMER_PHONE, pickup, dropoff, fare, vehicleType, driverName: selected.name, driverPhone: selected.phone, status: 'pending_payment', createdAt: new Date().toISOString() };
         rides.push(ride);
-        saveRides();
+        saveData();
         
         const panel = document.getElementById('tripPanel');
         panel.style.display = 'block';
-        panel.innerHTML = `
-            <h4><i class="fas fa-clock"></i> Ride Requested!</h4>
-            <p><strong>Driver:</strong> ${ride.driverName}<br>
-            <strong>Vehicle:</strong> ${selectedVehicle.registration}<br>
-            <strong>Amount:</strong> ZMW ${ride.fare}</p>
-            <button class="btn-primary" style="background: #22c55e; margin-top: 10px;" onclick="processPayment('${ride.id}')">
-                <i class="fas fa-credit-card"></i> Pay with MTN Mobile Money
-            </button>
-            <button class="btn-primary" style="background: #ef4444; margin-top: 8px;" onclick="document.getElementById('tripPanel').style.display='none'">
-                Cancel
-            </button>
-        `;
-        
-        showToast(`Connecting you to ${ride.driverName}...`);
-        
-        // Show route if possible
-        if (routingControl) {
-            map.removeControl(routingControl);
-        }
-        if (userLocation) {
-            routingControl = L.Routing.control({
-                waypoints: [
-                    L.latLng(userLocation.lat, userLocation.lng),
-                    L.latLng(selectedVehicle.lat, selectedVehicle.lng)
-                ],
-                routeWhileDragging: false,
-                showAlternatives: false,
-                lineOptions: { styles: [{ color: '#0f3b2c', weight: 4 }] }
-            }).addTo(map);
-        }
+        panel.innerHTML = `<h4><i class="fas fa-clock"></i> Ride Requested!</h4><p><strong>Driver:</strong> ${ride.driverName}<br><strong>Amount:</strong> ZMW ${ride.fare}</p><button class="btn-primary" style="background:#22c55e" onclick="processPayment('${ride.id}')"><i class="fas fa-credit-card"></i> Pay with MTN</button><button class="btn-primary" style="background:#ef4444; margin-top:8px" onclick="document.getElementById('tripPanel').style.display='none'">Cancel</button>`;
+        showToast(`Connecting to ${ride.driverName}...`);
     }
     
     function processPayment(rideId) {
-        const mtnNumber = prompt('Enter MTN Mobile Money number:', '0971XXXXXX');
-        if (!mtnNumber) return;
-        
+        const mtn = prompt('Enter MTN Mobile Money number:', '0971XXXXXX');
+        if (!mtn) return;
         const ride = rides.find(r => r.id == rideId);
         if (ride) {
-            ride.paymentDone = true;
             ride.status = 'confirmed';
-            saveRides();
-            
-            document.getElementById('tripPanel').innerHTML = `
-                <h4><i class="fas fa-check-circle" style="color: #22c55e;"></i> Payment Successful!</h4>
-                <p><i class="fas ${ride.vehicleType === 'bike' ? 'fa-motorcycle' : 'fa-car'}"></i> ${ride.driverName} is coming to pick you up.</p>
-                <p>📞 <a href="tel:${ride.driverPhone}" style="color: #0f3b2c;">Call Driver</a> | 
-                <a href="sms:${ride.driverPhone}?body=I'm ready at ${ride.pickup}" style="color: #0f3b2c;">SMS Driver</a></p>
-                <button class="btn-primary" onclick="completeRide('${ride.id}')">Complete Ride</button>
-            `;
-            
+            saveData();
+            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-check-circle" style="color:#22c55e"></i> Payment Successful!</h4><p>${ride.driverName} is coming to pick you up.</p><button class="btn-primary" onclick="completeRide('${ride.id}')">Complete Ride</button>`;
             showToast('✅ Payment confirmed! Driver on the way.');
-            
-            // Simulate SMS to driver
-            setTimeout(() => {
-                showToast(`Driver ${ride.driverName} has been notified`);
-            }, 1000);
         }
     }
     
     function completeRide(rideId) {
         const ride = rides.find(r => r.id == rideId);
-        if (ride) {
-            ride.status = 'completed';
-            ride.completedAt = new Date().toISOString();
-            saveRides();
-            document.getElementById('tripPanel').style.display = 'none';
-            showToast('🎉 Ride completed! Thank you for using Kasama Rides.');
-            
-            if (routingControl) {
-                map.removeControl(routingControl);
-                routingControl = null;
-            }
-        }
+        if (ride) { ride.status = 'completed'; ride.completedAt = new Date().toISOString(); saveData(); document.getElementById('tripPanel').style.display = 'none'; showToast('🎉 Ride completed!'); }
     }
     
     function switchTab(tab) {
         document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        
         if (tab === 'rides') {
-            const userRides = rides.filter(r => r.customerPhone === MY_PHONE);
+            const userRides = rides.filter(r => r.customerPhone === CUSTOMER_PHONE);
             const panel = document.getElementById('tripPanel');
             panel.style.display = 'block';
-            
-            if (userRides.length === 0) {
-                panel.innerHTML = `
-                    <h4><i class="fas fa-history"></i> My Rides</h4>
-                    <p style="text-align: center; padding: 20px;">No rides yet. Book your first ride!</p>
-                    <button class="btn-primary" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>
-                `;
-            } else {
-                panel.innerHTML = `
-                    <h4><i class="fas fa-history"></i> My Ride History</h4>
-                    ${userRides.slice(-5).reverse().map(ride => `
-                        <div style="padding: 12px; border-bottom: 1px solid #e2e8f0;">
-                            <strong>${ride.rideNumber}</strong><br>
-                            ${ride.pickup} → ${ride.dropoff}<br>
-                            ZMW ${ride.fare} • ${ride.status === 'completed' ? '✅ Completed' : ride.status === 'confirmed' ? '🚀 En Route' : '⏳ Pending'}<br>
-                            <small>Driver: ${ride.driverName}</small>
-                        </div>
-                    `).join('')}
-                    <button class="btn-primary" style="margin-top: 12px;" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>
-                `;
-            }
-        } else if (tab === 'home') {
-            document.getElementById('tripPanel').style.display = 'none';
-            if (routingControl) {
-                map.removeControl(routingControl);
-                routingControl = null;
-            }
-        } else if (tab === 'support') {
+            panel.innerHTML = `<h4><i class="fas fa-history"></i> My Rides</h4>${userRides.length === 0 ? '<p>No rides yet</p>' : userRides.slice(-5).reverse().map(r => `<div style="padding:8px; border-bottom:1px solid #eee;"><strong>${r.rideNumber}</strong><br>${r.pickup} → ${r.dropoff}<br>ZMW ${r.fare} • ${r.status}</div>`).join('')}<button class="btn-primary" style="margin-top:12px" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
+        } else if (tab === 'home') { document.getElementById('tripPanel').style.display = 'none'; }
+        else if (tab === 'support') {
             document.getElementById('tripPanel').style.display = 'block';
-            document.getElementById('tripPanel').innerHTML = `
-                <h4><i class="fas fa-headset"></i> Customer Support</h4>
-                <div style="padding: 12px;">
-                    <p><i class="fas fa-phone"></i> <strong>Call:</strong> <a href="tel:+260977123456">+260 97 712 3456</a></p>
-                    <p><i class="fab fa-whatsapp"></i> <strong>WhatsApp:</strong> <a href="https://wa.me/260977123456">+260 97 712 3456</a></p>
-                    <p><i class="fas fa-envelope"></i> <strong>Email:</strong> support@kasamarides.com</p>
-                    <hr>
-                    <p><strong>Your Number:</strong> ${MY_PHONE}</p>
-                    <p><strong>Emergency:</strong> 999</p>
-                </div>
-                <button class="btn-primary" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>
-            `;
+            document.getElementById('tripPanel').innerHTML = `<h4><i class="fas fa-headset"></i> Support</h4><div><p><i class="fas fa-phone"></i> <a href="tel:+260977123456">+260 97 712 3456</a></p><p><i class="fab fa-whatsapp"></i> <a href="https://wa.me/260977123456">WhatsApp</a></p><p><strong>Your Number:</strong> ${CUSTOMER_PHONE}</p></div><button class="btn-primary" onclick="document.getElementById('tripPanel').style.display='none'">Close</button>`;
         }
     }
     
-    // Make functions global
-    window.filterBikes = filterBikes;
-    window.filterCars = filterCars;
-    window.filterVehicles = filterVehicles;
-    window.centerOnMe = centerOnMe;
-    window.focusOnVehicle = focusOnVehicle;
-    window.callDriver = callDriver;
-    window.smsDriver = smsDriver;
-    window.requestRide = requestRide;
-    window.processPayment = processPayment;
-    window.completeRide = completeRide;
-    window.switchTab = switchTab;
+    // Make global functions
+    window.filterBikes = filterBikes; window.filterCars = filterCars; window.filterVehicles = filterVehicles;
+    window.centerOnMe = centerOnMe; window.focusOnVehicle = focusOnVehicle; window.callDriver = callDriver;
+    window.smsDriver = smsDriver; window.requestRide = requestRide; window.processPayment = processPayment;
+    window.completeRide = completeRide; window.switchTab = switchTab; window.toggleAdminPanel = toggleAdminPanel;
+    window.closeAdminPanel = closeAdminPanel; window.registerVehicle = registerVehicle; window.toggleDriverStatus = toggleDriverStatus;
+    window.deleteVehicle = deleteVehicle;
     
     // Initialize
     initMap();
-    
-    // Show welcome message
-    setTimeout(() => {
-        showToast(`📍 Welcome! Your number: ${MY_PHONE} | GPS tracking active`);
-    }, 1000);
+    showToast(`📍 Welcome! Your number: ${CUSTOMER_PHONE} | Admin: bottom-right button`);
 </script>
 </body>
 </html>
